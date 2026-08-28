@@ -1,0 +1,448 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import ProfileMenu from "../components/ProfileMenu.astro";
+import { createSupabaseServerClient } from "../lib/supabase";
+import {
+  bucketTask,
+  endOfWeek,
+  formatDuePill,
+  formatTodayLabel,
+  isUrgent,
+  toDateKey,
+  type TaskBucket,
+} from "../lib/tasks";
+
+const supabase = createSupabaseServerClient(Astro.request, Astro.cookies);
+const user = Astro.locals.user!;
+
+const displayName = user.user_metadata?.full_name ?? "Unknown User";
+const username = {
+  name: displayName,
+  initials: displayName
+    .split(" ")
+    .filter(Boolean)
+    .map((n: string) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase(),
+};
+
+type SubjectRow = { id: string; name: string; color: string };
+type TaskRow = {
+  id: string;
+  title: string;
+  description: string;
+  due_date: string;
+  completed: boolean;
+  subject_id: string | null;
+  subjects: { id: string; name: string; color: string } | null;
+};
+
+const { data: subjectsData } = await supabase
+  .from("subjects")
+  .select("id, name, color")
+  .eq("user_id", user.id)
+  .order("created_at", { ascending: true });
+
+const subjects: SubjectRow[] = subjectsData ?? [];
+
+const { data: tasksData } = await supabase
+  .from("tasks")
+  .select("id, title, description, due_date, completed, subject_id, subjects(id, name, color)")
+  .eq("user_id", user.id)
+  .order("due_date", { ascending: true });
+
+const tasks = (tasksData ?? []) as unknown as TaskRow[];
+
+const today = new Date();
+const todayKey = toDateKey(today);
+const todayLabel = formatTodayLabel(today);
+const weekEndKey = toDateKey(endOfWeek(today));
+
+type ViewTask = {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  subjectId: string | null;
+  subjectName: string;
+  color: string;
+  day: string;
+  date: string;
+  urgent: boolean;
+  completed: boolean;
+};
+
+const grouped: Record<TaskBucket, ViewTask[]> = {
+  today: [],
+  week: [],
+  later: [],
+  completed: [],
+};
+
+for (const task of tasks) {
+  const color = task.subjects?.color ?? "blue";
+  const subjectName = task.subjects?.name ?? "No subject";
+  const { day, date } = formatDuePill(task.due_date);
+  const view: ViewTask = {
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    dueDate: task.due_date,
+    subjectId: task.subject_id,
+    subjectName,
+    color,
+    day,
+    date,
+    urgent: isUrgent(task.due_date, task.completed, todayKey),
+    completed: task.completed,
+  };
+  grouped[bucketTask(task.due_date, task.completed, todayKey, weekEndKey)].push(view);
+}
+
+const openCount = tasks.filter((t) => !t.completed).length;
+const greetingName = username.name.includes(" ")
+  ? (username.name.split(" ")[0] ?? "there")
+  : username.name;
+
+const sections: { key: TaskBucket; title: string }[] = [
+  { key: "today", title: "Today" },
+  { key: "week", title: "This week" },
+  { key: "later", title: "Later" },
+  { key: "completed", title: "Completed" },
+];
+---
+
+<Layout title="Dashboard">
+  <div class="app-shell">
+    <Navbar>
+      <div class="user-menu">
+        <ProfileMenu displayName={displayName} email={user.email ?? ""} initials={username.initials} />
+      </div>
+    </Navbar>
+
+    <main
+      class="dashboard-main"
+      id="dashboard"
+      data-open-count={openCount}
+      data-subject-count={subjects.length}
+    >
+      <div class="page-head">
+        <div>
+          <p class="page-date">{todayLabel}</p>
+          <h1>Welcome back, {greetingName}</h1>
+          <p class="sub">
+            {
+              openCount === 0
+                ? `No open tasks across ${subjects.length} subjects.`
+                : `You have ${openCount} open task${openCount === 1 ? "" : "s"} across ${subjects.length} subject${subjects.length === 1 ? "" : "s"}.`
+            }
+          </p>
+        </div>
+        {
+          tasks.length > 0 && (
+            <div class="page-head-actions">
+              <input type="checkbox" id="clear-all-menu" class="delete-toggle" hidden />
+              <label for="clear-all-menu" class="btn btn-ghost btn-sm">Clear all</label>
+              <div class="delete-confirm">
+                <p>Delete all assignments? This can't be undone.</p>
+                <div class="delete-confirm-actions">
+                  <label for="clear-all-menu" class="btn btn-ghost btn-sm">Cancel</label>
+                  <form action="/api/tasks/clear" method="post" class="js-dashboard-form">
+                    <button type="submit" class="btn btn-primary btn-sm">Clear all</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )
+        }
+      </div>
+
+      <nav class="subject-tabs" aria-label="Filter by subject" id="subject-tabs">
+        <div class="subject-tabs-scroll">
+          <button type="button" class="subject-tab" data-subject="all" data-active="true">All</button>
+
+          {
+            subjects.map((subject) => (
+              <div class="subject-tab-wrapper" data-subject-id={subject.id}>
+                <button
+                  type="button"
+                  class="subject-tab"
+                  data-subject={subject.id}
+                  style={`color: var(--subject-${subject.color});`}
+                >
+                  <span class="swatch" /> {subject.name}
+                </button>
+                <div class="subject-actions">
+                  <input type="checkbox" id={`menu-subject-${subject.id}`} class="delete-toggle" hidden />
+                  <label
+                    for={`menu-subject-${subject.id}`}
+                    class="delete-btn"
+                    aria-label={`Delete ${subject.name} subject`}
+                  >
+                    ✕
+                  </label>
+                  <div class="delete-confirm">
+                    <p>Delete {subject.name}? Its tasks won't be deleted.</p>
+                    <div class="delete-confirm-actions">
+                      <label for={`menu-subject-${subject.id}`} class="btn btn-ghost btn-sm">
+                        Cancel
+                      </label>
+                      <form action="/api/subjects/delete" method="post" class="js-dashboard-form">
+                        <input type="hidden" name="id" value={subject.id} />
+                        <button type="submit" class="btn btn-primary btn-sm">Delete</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+
+        <details class="add-subject">
+          <summary class="subject-tab-add" aria-label="Add a subject">+</summary>
+          <div class="add-subject-body">
+            <form action="/api/subjects/create" method="post" class="js-dashboard-form">
+              <div class="field">
+                <label for="new-subject-name">Subject name</label>
+                <input
+                  class="input"
+                  type="text"
+                  id="new-subject-name"
+                  name="name"
+                  placeholder="e.g. Chemistry"
+                  required
+                />
+              </div>
+              <div class="field">
+                <label for="new-subject-color">Color</label>
+                <select class="input" id="new-subject-color" name="color" required>
+                  <option value="blue">Blue</option>
+                  <option value="green">Green</option>
+                  <option value="violet">Violet</option>
+                  <option value="orange">Orange</option>
+                  <option value="pink">Pink</option>
+                  <option value="teal">Teal</option>
+                  <option value="yellow">Yellow</option>
+                  <option value="red">Red</option>
+                  <option value="slate">Slate</option>
+                  <option value="lime">Lime</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">Add subject</button>
+              <button type="button" class="btn btn-ghost btn-block add-subject-cancel">Cancel</button>
+            </form>
+          </div>
+        </details>
+      </nav>
+
+      <details class="add-task">
+        <summary>
+          <span><span class="plus">+</span>Add a task</span>
+        </summary>
+        <div class="add-task-body">
+          <form action="/api/tasks/create" method="post" class="js-dashboard-form">
+            <div class="form-grid">
+              <div class="field">
+                <label for="subject">Subject</label>
+                <select class="input" id="subject" name="subject_id" required>
+                  <option value="" disabled selected>Choose a subject</option>
+                  {
+                    subjects.map((subject) => (
+                      <option value={subject.id}>{subject.name}</option>
+                    ))
+                  }
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="due-date">Due date</label>
+                <input class="input" type="date" id="due-date" name="due_date" required />
+              </div>
+
+              <div class="field full">
+                <label for="title">Title</label>
+                <input
+                  class="input"
+                  type="text"
+                  id="title"
+                  name="title"
+                  placeholder="e.g. Finish worksheet 4.3"
+                  required
+                />
+              </div>
+
+              <div class="field full">
+                <label for="description">Description</label>
+                <textarea
+                  class="input"
+                  id="description"
+                  name="description"
+                  placeholder="Any notes - page numbers, instructions, what to bring."
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="reset" class="btn btn-ghost">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save task</button>
+            </div>
+          </form>
+        </div>
+      </details>
+
+      {
+        sections.map(({ key, title }) => {
+          const list = grouped[key];
+          if (list.length === 0) return null;
+          return (
+            <section class="task-group" data-bucket={key}>
+              <p class="task-group-title">{title}</p>
+              <div class="task-list">
+                {list.map((task) => (
+                  <div
+                    class="task-card-wrapper"
+                    data-subject-id={task.subjectId ?? ""}
+                  >
+                    <article
+                      class="task-card"
+                      style={`--subject-color: var(--subject-${task.color});`}
+                    >
+                      <div class="task-card-main">
+                        <form action="/api/tasks/toggle" method="post" class="task-check-form js-dashboard-form">
+                          <input type="hidden" name="id" value={task.id} />
+                          <label class="task-check-hit" title={task.completed ? "Mark incomplete" : "Mark complete"}>
+                            <input
+                              type="checkbox"
+                              class="task-check"
+                              checked={task.completed}
+                              aria-label={`Mark "${task.title}" ${task.completed ? "incomplete" : "complete"}`}
+                            />
+                          </label>
+                        </form>
+                        <div class="task-body">
+                          <div class="task-top-row">
+                            <span class="subject-label">{task.subjectName}</span>
+                          </div>
+                          <p class="task-title">{task.title}</p>
+                          {task.description && <p class="task-desc">{task.description}</p>}
+                        </div>
+                        <div class={`due-pill ${task.urgent ? "urgent" : ""}`}>
+                          <span class="day">{task.day}</span>
+                          <span class="date">{task.date}</span>
+                        </div>
+                        <div class="task-actions">
+                          <label
+                            for={`edit-task-${task.id}`}
+                            class="edit-btn"
+                            aria-label={`Edit "${task.title}"`}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                            </svg>
+                            Edit
+                          </label>
+                          <input
+                            type="checkbox"
+                            id={`menu-task-${task.id}`}
+                            class="delete-toggle"
+                            hidden
+                          />
+                          <label
+                            for={`menu-task-${task.id}`}
+                            class="task-delete-btn"
+                            aria-label={`Delete "${task.title}"`}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                            </svg>
+                            Delete
+                          </label>
+                          <div class="delete-confirm">
+                            <p>Delete this task?</p>
+                            <div class="delete-confirm-actions">
+                              <label for={`menu-task-${task.id}`} class="btn btn-ghost btn-sm">
+                                Cancel
+                              </label>
+                              <form action="/api/tasks/delete" method="post" class="js-dashboard-form">
+                                <input type="hidden" name="id" value={task.id} />
+                                <button type="submit" class="btn btn-primary btn-sm">Delete</button>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <input type="checkbox" id={`edit-task-${task.id}`} class="edit-toggle" hidden />
+                      <div class="edit-task-panel">
+                        <form action="/api/tasks/update" method="post" class="js-dashboard-form">
+                          <input type="hidden" name="id" value={task.id} />
+                          <div class="form-grid">
+                            <div class="field full">
+                              <label for={`edit-title-${task.id}`}>Title</label>
+                              <input
+                                class="input"
+                                type="text"
+                                id={`edit-title-${task.id}`}
+                                name="title"
+                                value={task.title}
+                                required
+                              />
+                            </div>
+                            <div class="field">
+                              <label for={`edit-due-${task.id}`}>Due date</label>
+                              <input
+                                class="input"
+                                type="date"
+                                id={`edit-due-${task.id}`}
+                                name="due_date"
+                                value={task.dueDate}
+                                required
+                              />
+                            </div>
+                            <div class="field full">
+                              <label for={`edit-desc-${task.id}`}>Description</label>
+                              <textarea
+                                class="input"
+                                id={`edit-desc-${task.id}`}
+                                name="description"
+                                placeholder="Any notes — page numbers, instructions, what to bring."
+                              >{task.description}</textarea>
+                            </div>
+                          </div>
+                          <div class="form-actions">
+                            <label for={`edit-task-${task.id}`} class="btn btn-ghost">Cancel</label>
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                          </div>
+                        </form>
+                      </div>
+                    </article>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })
+      }
+
+      {
+        tasks.length === 0 && (
+          <div class="empty-state">No tasks yet. Add one above to get started.</div>
+        )
+      }
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import "../scripts/dashboard.client.ts";
+</script>

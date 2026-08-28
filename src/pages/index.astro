@@ -1,11 +1,85 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+export const prerender = false;
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import DashboardPreview from "../components/DashboardPreview.astro";
+
+const user = Astro.locals.user;
 ---
 
 <Layout>
-	<Welcome />
+  <div class="app-shell">
+    <Navbar>
+      {
+        user ? (
+          <a href="/dashboard" class="btn btn-primary btn-sm">Dashboard</a>
+        ) : (
+          <>
+            <a href="/signin" class="btn btn-ghost btn-sm">Sign in</a>
+            <a href="/signup" class="btn btn-primary btn-sm">Get started</a>
+          </>
+        )
+      }
+    </Navbar>
+
+    <main class="landing-main">
+      <section class="landing-hero-grid">
+        <div class="landing-hero">
+          <p class="landing-eyebrow">Simple · private · yours</p>
+          <h1>Track assignments without the clutter.</h1>
+          <p class="landing-lead">
+            Organize tasks by subject, see what's due this week, and mark things done as you go.
+            Built for students who want a clean list, not another bloated planner.
+          </p>
+          <div class="landing-cta">
+            {
+              user ? (
+                <a href="/dashboard" class="btn btn-primary">Open dashboard</a>
+              ) : (
+                <>
+                  <a href="/signup" class="btn btn-primary">Create free account</a>
+                  <a href="/signin" class="btn btn-ghost">Sign in</a>
+                </>
+              )
+            }
+          </div>
+        </div>
+
+        <DashboardPreview />
+      </section>
+
+      <section class="landing-features">
+        <article class="landing-card">
+          <h2>By subject</h2>
+          <p>Filter Math, Science, English, or any custom subject with color-coded tags.</p>
+        </article>
+        <article class="landing-card">
+          <h2>Due dates that make sense</h2>
+          <p>Tasks group into Today, This week, and Later so you know what to tackle first.</p>
+        </article>
+        <article class="landing-card">
+          <h2>Your account, your data</h2>
+          <p>Sign in from anywhere. Your tasks sync to your account. Nothing is shared publicly.</p>
+        </article>
+      </section>
+
+      <section class="landing-bottom-cta">
+        <h2>Ready to get organized?</h2>
+        <p>Free to use. Your tasks stay tied to your account.</p>
+        <div class="landing-cta">
+          {
+            user ? (
+              <a href="/dashboard" class="btn btn-primary">Go to dashboard</a>
+            ) : (
+              <>
+                <a href="/signup" class="btn btn-primary">Create free account</a>
+                <a href="/signin" class="btn btn-ghost">Sign in</a>
+              </>
+            )
+          }
+        </div>
+      </section>
+    </main>
+  </div>
 </Layout>

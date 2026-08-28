@@ -1,0 +1,133 @@
+---
+export interface Props {
+  displayName: string;
+  email: string;
+  initials: string;
+}
+
+const { displayName, email, initials } = Astro.props;
+---
+
+<div class="profile-menu" data-profile-menu>
+  <button
+    type="button"
+    class="avatar profile-menu-trigger"
+    aria-expanded="false"
+    aria-controls="profile-menu-panel"
+    aria-label="Open profile menu"
+  >
+    {initials}
+  </button>
+
+  <div class="profile-menu-backdrop" data-profile-backdrop hidden></div>
+
+  <div id="profile-menu-panel" class="profile-menu-panel" role="menu" hidden>
+    <div class="profile-menu-header">
+      <p class="profile-menu-name">{displayName}</p>
+      <p class="profile-menu-email">{email}</p>
+    </div>
+
+    <div class="profile-menu-actions">
+      <form action="/api/auth/logout" method="post">
+        <button type="submit" class="btn btn-ghost btn-block">Sign out</button>
+      </form>
+
+      <input type="checkbox" id="profile-delete-toggle" class="delete-toggle" hidden />
+      <label for="profile-delete-toggle" class="btn btn-ghost btn-block profile-menu-delete">
+        Delete account
+      </label>
+
+      <div class="delete-confirm profile-menu-delete-confirm">
+        <p>Delete your account? All tasks and subjects will be removed. This can't be undone.</p>
+        <div class="delete-confirm-actions">
+          <label for="profile-delete-toggle" class="btn btn-ghost btn-sm">Cancel</label>
+          <form action="/api/auth/delete-account" method="post" class="js-profile-delete-form">
+            <button type="submit" class="btn btn-primary btn-sm profile-delete-submit">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const menus = document.querySelectorAll<HTMLElement>("[data-profile-menu]");
+
+  menus.forEach((menu) => {
+    const trigger = menu.querySelector<HTMLButtonElement>(".profile-menu-trigger");
+    const panel = menu.querySelector<HTMLElement>(".profile-menu-panel");
+    const backdrop = menu.querySelector<HTMLElement>("[data-profile-backdrop]");
+    const deleteToggle = menu.querySelector<HTMLInputElement>("#profile-delete-toggle");
+
+    if (!trigger || !panel) return;
+
+    const closeDeleteConfirm = () => {
+      if (deleteToggle) deleteToggle.checked = false;
+    };
+
+    const isMobile = () => window.matchMedia("(max-width: 640px)").matches;
+
+    const setOpen = (open: boolean) => {
+      menu.classList.toggle("is-open", open);
+      trigger.setAttribute("aria-expanded", String(open));
+      panel.hidden = !open;
+      if (backdrop) backdrop.hidden = !open || !isMobile();
+      if (!open) closeDeleteConfirm();
+    };
+
+    trigger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setOpen(!menu.classList.contains("is-open"));
+    });
+
+    backdrop?.addEventListener("click", () => setOpen(false));
+
+    document.addEventListener("click", (event) => {
+      if (!menu.classList.contains("is-open")) return;
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (menu.contains(target)) return;
+      setOpen(false);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && menu.classList.contains("is-open")) {
+        setOpen(false);
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (menu.classList.contains("is-open")) {
+        setOpen(false);
+      }
+    });
+
+    menu.querySelector(".js-profile-delete-form")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+
+      const submitter = form.querySelector<HTMLButtonElement>(".profile-delete-submit");
+      if (submitter) submitter.disabled = true;
+
+      try {
+        const response = await fetch(form.action, {
+          method: form.method,
+          headers: { Accept: "application/json" },
+        });
+
+        const data = (await response.json()) as { ok?: boolean; error?: string };
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error ?? "Failed to delete account");
+        }
+
+        window.location.href = "/";
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to delete account";
+        window.showToast?.(message, "error");
+        if (submitter) submitter.disabled = false;
+      }
+    });
+  });
+</script>

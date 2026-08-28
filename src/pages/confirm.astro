@@ -1,0 +1,55 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+
+const error = Astro.url.searchParams.get("error");
+const user = Astro.locals.user;
+---
+
+<Layout title="Email confirmed">
+  <div class="app-shell">
+    <Navbar>
+      {
+        user ? (
+          <a href="/dashboard" class="btn btn-ghost btn-sm">Dashboard</a>
+        ) : (
+          <a href="/signin" class="btn btn-ghost btn-sm">Sign in</a>
+        )
+      }
+    </Navbar>
+    <div class="auth-shell">
+      <div class="auth-card">
+        {
+          error ? (
+            <>
+              <h1>Confirmation failed</h1>
+              <p class="sub">
+                The link may have expired. Try signing up again or request a new confirmation email.
+              </p>
+              <a href="/signup" class="btn btn-primary btn-block">Back to sign up</a>
+              <p class="switch-line">
+                Already confirmed? <a href="/signin">Sign in</a>
+              </p>
+            </>
+          ) : (
+            <>
+              <h1>Email confirmed</h1>
+              <p class="sub">
+                Your account is verified. You're all set to start tracking assignments.
+              </p>
+              {
+                user ? (
+                  <a href="/dashboard" class="btn btn-primary btn-block">Go to dashboard</a>
+                ) : (
+                  <a href="/signin" class="btn btn-primary btn-block">Sign in</a>
+                )
+              }
+            </>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</Layout>

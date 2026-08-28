@@ -1,0 +1,91 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+---
+
+<Layout title="Sign in">
+  <div class="app-shell">
+    <Navbar>
+      <a href="/signup" class="btn btn-ghost btn-sm">Create account</a>
+    </Navbar>
+    <div class="auth-shell">
+      <div class="auth-card">
+        <h1>Sign in</h1>
+        <p class="sub">Pick up where you left off.</p>
+        <form action="/api/auth/signin" method="post">
+          <div class="field">
+            <label for="email">Email</label>
+            <input
+              class="input"
+              type="email"
+              id="email"
+              name="email"
+              placeholder="you@school.edu"
+              autocomplete="email"
+              required
+            />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="password-wrapper">
+              <input
+                class="input"
+                type="password"
+                id="password"
+                name="password"
+                placeholder="••••••••"
+                autocomplete="current-password"
+                required
+              />
+              <button type="button" class="toggle-password" aria-label="Show password">
+                <svg
+                  class="icon-eye"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg
+                  class="icon-eye-off"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"
+                  ></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="row-between">
+            <label class="checkbox-row">
+              <input type="checkbox" name="remember" />
+              Remember me
+            </label>
+            <a href="#">Forgot password?</a>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+        </form>
+        <p class="switch-line">
+          New to Assignment Planner? <a href="/signup">Create an account</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</Layout>
