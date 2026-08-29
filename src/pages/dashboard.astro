@@ -4,7 +4,7 @@ export const prerender = false;
 import Layout from "../layouts/Layout.astro";
 import Navbar from "../components/Navbar.astro";
 import ProfileMenu from "../components/ProfileMenu.astro";
-import { createSupabaseServerClient } from "../lib/supabase";
+import { getAuthUser } from "../lib/auth";
 import {
   bucketTask,
   endOfWeek,
@@ -15,8 +15,8 @@ import {
   type TaskBucket,
 } from "../lib/tasks";
 
-const supabase = createSupabaseServerClient(Astro.request, Astro.cookies);
-const user = Astro.locals.user!;
+const { supabase, user } = await getAuthUser(Astro.request, Astro.cookies);
+if (!user) return Astro.redirect("/signin");
 
 const displayName = user.user_metadata?.full_name ?? "Unknown User";
 const username = {

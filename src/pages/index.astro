@@ -4,8 +4,10 @@ export const prerender = false;
 import Layout from "../layouts/Layout.astro";
 import Navbar from "../components/Navbar.astro";
 import DashboardPreview from "../components/DashboardPreview.astro";
+import { getAuthUser } from "../lib/auth";
 
-const user = Astro.locals.user;
+const { user } = await getAuthUser(Astro.request, Astro.cookies);
+if (user) return Astro.redirect("/dashboard");
 ---
 
 <Layout>

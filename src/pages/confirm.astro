@@ -3,9 +3,10 @@ export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
 import Navbar from "../components/Navbar.astro";
+import { getAuthUser } from "../lib/auth";
 
 const error = Astro.url.searchParams.get("error");
-const user = Astro.locals.user;
+const { user } = await getAuthUser(Astro.request, Astro.cookies);
 ---
 
 <Layout title="Email confirmed">
