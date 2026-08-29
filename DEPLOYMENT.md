@@ -76,7 +76,10 @@ Supabase dashboard → **Authentication → URL Configuration**
 |---------|-------|
 | **Site URL** | `https://assignmentplanner.org` |
 | **Redirect URLs** | `https://assignmentplanner.org/confirm` |
+| | `https://assignmentplanner.org/reset-password` |
 | | `https://assignmentplanner.org/api/auth/callback` |
+| | `http://localhost:4321/confirm` |
+| | `http://localhost:4321/reset-password` |
 | | `http://localhost:4321/api/auth/callback` (keep for local dev) |
 
 Save. Auth emails and OAuth redirects will use production URL.

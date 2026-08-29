@@ -1128,6 +1128,10 @@ textarea.input {
   border-color: color-mix(in srgb, var(--color-warm) 55%, var(--color-border));
 }
 
+.toast-success {
+  border-color: color-mix(in srgb, var(--subject-green) 55%, var(--color-border));
+}
+
 .toast-message {
   flex: 1;
   margin: 0;
@@ -1138,6 +1142,10 @@ textarea.input {
 
 .toast-error .toast-message {
   color: var(--color-warm-text);
+}
+
+.toast-success .toast-message {
+  color: var(--color-ink);
 }
 
 .toast-close {
@@ -1538,12 +1546,36 @@ textarea.input {
   flex-wrap: wrap;
 }
 
+.footer-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 520px;
+}
+
 .footer-privacy {
   color: var(--color-muted);
   font-size: 13px;
   line-height: 1.45;
   margin: 0;
-  max-width: 520px;
+}
+
+.footer-feedback {
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.footer-feedback a {
+  color: var(--color-ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.footer-feedback a:hover {
+  color: var(--color-accent-hover);
 }
 
 .footer-actions {

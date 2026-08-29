@@ -4,9 +4,14 @@ const sourceUrl = import.meta.env.PUBLIC_SOURCE_URL ?? "https://github.com";
 
 <footer class="site-footer">
   <div class="site-footer-inner">
-    <p class="footer-privacy">
-      Your assignments stay private to your account. We don't sell or share your data.
-    </p>
+    <div class="footer-copy">
+      <p class="footer-privacy">
+        Your assignments stay private to your account. We don't sell or share your data.
+      </p>
+      <p class="footer-feedback">
+        Want to report bugs or suggest features? <a href="mailto:contact@assignmentplanner.org">Contact me</a>.
+      </p>
+    </div>
     <div class="footer-actions">
       <a href={sourceUrl} class="btn btn-ghost btn-sm footer-source" target="_blank" rel="noopener noreferrer">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

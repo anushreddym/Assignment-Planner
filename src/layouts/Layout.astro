@@ -10,6 +10,7 @@ const BRAND = "Assignment Planner";
 const { title } = Astro.props;
 const documentTitle = title ? `${BRAND} · ${title}` : BRAND;
 const toastError = Astro.url.searchParams.get("error");
+const toastSuccess = Astro.url.searchParams.get("success");
 ---
 
 <!doctype html>
@@ -43,7 +44,7 @@ const toastError = Astro.url.searchParams.get("error");
 
     <div id="toast-root" class="toast-root" aria-live="polite" aria-relevant="additions"></div>
 
-    <script define:vars={{ toastError }}>
+    <script define:vars={{ toastError, toastSuccess }}>
       function showToast(message, type = "error") {
         const root = document.getElementById("toast-root");
         if (!root || !message) return;
@@ -79,6 +80,14 @@ const toastError = Astro.url.searchParams.get("error");
         showToast(toastError, "error");
         const url = new URL(window.location.href);
         url.searchParams.delete("error");
+        const next = url.pathname + (url.search || "") + url.hash;
+        window.history.replaceState({}, "", next);
+      }
+
+      if (toastSuccess) {
+        showToast(toastSuccess, "success");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("success");
         const next = url.pathname + (url.search || "") + url.hash;
         window.history.replaceState({}, "", next);
       }
