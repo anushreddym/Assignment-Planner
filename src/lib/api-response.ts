@@ -2,9 +2,15 @@ export function wantsJson(request: Request): boolean {
   return request.headers.get("Accept")?.includes("application/json") ?? false;
 }
 
-/** Use instead of Astro redirect() after reading request.formData() on Vercel. */
+/**
+ * Response.redirect() produces immutable headers, which breaks when Astro
+ * appends Supabase auth cookies. Build the response manually instead.
+ */
 export function redirectTo(path: string, request: Request, status = 303) {
-  return Response.redirect(new URL(path, request.url).toString(), status);
+  return new Response(null, {
+    status,
+    headers: { Location: new URL(path, request.url).toString() },
+  });
 }
 
 export function jsonOk(body: Record<string, unknown>, status = 200) {
