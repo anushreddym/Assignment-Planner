@@ -4,26 +4,26 @@ import type { APIRoute } from "astro";
 import { apiError, apiRedirectOrJson, apiUnauthorized } from "../../../lib/api-response";
 import { createSupabaseServerClient } from "../../../lib/supabase";
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   const supabase = createSupabaseServerClient(request, cookies);
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return apiUnauthorized(request, redirect);
+  if (!user) return apiUnauthorized(request);
 
   const formData = await request.formData();
   const id = formData.get("id")?.toString();
 
   if (!id) {
-    return apiError(request, redirect, "/dashboard", "Missing subject id");
+    return apiError(request, "/dashboard", "Missing subject id");
   }
 
   const { error } = await supabase.from("subjects").delete().eq("id", id).eq("user_id", user.id);
 
   if (error) {
-    return apiError(request, redirect, "/dashboard", error.message);
+    return apiError(request, "/dashboard", error.message);
   }
 
-  return apiRedirectOrJson(request, redirect, "/dashboard", { id });
+  return apiRedirectOrJson(request, "/dashboard", { id });
 };

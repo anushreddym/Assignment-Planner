@@ -1,9 +1,10 @@
 export const prerender = false;
 
 import type { APIRoute } from "astro";
+import { redirectTo } from "../../../lib/api-response";
 import { createSupabaseServerClient } from "../../../lib/supabase";
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   const formData = await request.formData();
   const name = formData.get("name")?.toString();
   const email = formData.get("email")?.toString();
@@ -11,11 +12,11 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const confirmPassword = formData.get("confirm-password")?.toString();
 
   if (!name || !email || !password) {
-    return redirect("/signup?error=" + encodeURIComponent("All fields are required"));
+    return redirectTo("/signup?error=" + encodeURIComponent("All fields are required"), request);
   }
 
   if (password !== confirmPassword) {
-    return redirect("/signup?error=" + encodeURIComponent("Passwords do not match"));
+    return redirectTo("/signup?error=" + encodeURIComponent("Passwords do not match"), request);
   }
 
   const supabase = createSupabaseServerClient(request, cookies);
@@ -31,13 +32,12 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   });
 
   if (error) {
-    return redirect("/signup?error=" + encodeURIComponent(error.message));
+    return redirectTo("/signup?error=" + encodeURIComponent(error.message), request);
   }
 
-  // Email confirmation enabled → no session yet
   if (!data.session) {
-    return redirect("/check-email?email=" + encodeURIComponent(email));
+    return redirectTo("/check-email?email=" + encodeURIComponent(email), request);
   }
 
-  return redirect("/dashboard");
+  return redirectTo("/dashboard", request);
 };

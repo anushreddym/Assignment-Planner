@@ -7,13 +7,13 @@ import { toTaskView, todayKeys, type TaskRow } from "../../../lib/view-models";
 
 const TASK_SELECT = "id, title, description, due_date, completed, subject_id, subjects(id, name, color)";
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   const supabase = createSupabaseServerClient(request, cookies);
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return apiUnauthorized(request, redirect);
+  if (!user) return apiUnauthorized(request);
 
   const formData = await request.formData();
   const subjectId = formData.get("subject_id")?.toString();
@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const dueDate = formData.get("due_date")?.toString();
 
   if (!subjectId || !title || !dueDate) {
-    return apiError(request, redirect, "/dashboard", "Subject, title, and due date are required");
+    return apiError(request, "/dashboard", "Subject, title, and due date are required");
   }
 
   const { data: subject } = await supabase
@@ -33,7 +33,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     .maybeSingle();
 
   if (!subject) {
-    return apiError(request, redirect, "/dashboard", "Subject not found");
+    return apiError(request, "/dashboard", "Subject not found");
   }
 
   const { data: inserted, error } = await supabase
@@ -49,11 +49,11 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     .single();
 
   if (error || !inserted) {
-    return apiError(request, redirect, "/dashboard", error?.message ?? "Failed to create task");
+    return apiError(request, "/dashboard", error?.message ?? "Failed to create task");
   }
 
   const keys = todayKeys();
   const task = toTaskView(inserted as unknown as TaskRow, keys.todayKey, keys.weekEndKey);
 
-  return apiRedirectOrJson(request, redirect, "/dashboard", { task });
+  return apiRedirectOrJson(request, "/dashboard", { task });
 };

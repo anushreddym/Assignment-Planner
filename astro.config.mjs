@@ -8,11 +8,9 @@ export default defineConfig({
     schema: {
       SUPABASE_URL: envField.string({ context: 'server', access: 'public' }),
       SUPABASE_PUBLISHABLE_KEY: envField.string({ context: 'server', access: 'public' }),
-      SUPABASE_SECRET_KEY: envField.string({ context: 'server', access: 'secret' }),
+      SUPABASE_SECRET_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
       PUBLIC_SOURCE_URL: envField.string({ context: 'client', access: 'public', optional: true }),
     },
   },
-  adapter: vercel({
-    middlewareMode: 'edge',
-  }),
+  adapter: vercel(),
 });

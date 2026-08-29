@@ -4,19 +4,19 @@ import type { APIRoute } from "astro";
 import { apiError, apiRedirectOrJson, apiUnauthorized } from "../../../lib/api-response";
 import { createSupabaseServerClient } from "../../../lib/supabase";
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   const supabase = createSupabaseServerClient(request, cookies);
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return apiUnauthorized(request, redirect);
+  if (!user) return apiUnauthorized(request);
 
   const { error } = await supabase.from("tasks").delete().eq("user_id", user.id);
 
   if (error) {
-    return apiError(request, redirect, "/dashboard", error.message);
+    return apiError(request, "/dashboard", error.message);
   }
 
-  return apiRedirectOrJson(request, redirect, "/dashboard", {});
+  return apiRedirectOrJson(request, "/dashboard", {});
 };

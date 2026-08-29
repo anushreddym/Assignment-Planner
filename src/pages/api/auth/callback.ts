@@ -2,9 +2,10 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { redirectTo } from "../../../lib/api-response";
 import { createSupabaseServerClient } from "../../../lib/supabase";
 
-export const GET: APIRoute = async ({ request, cookies, redirect }) => {
+export const GET: APIRoute = async ({ request, cookies }) => {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const token_hash = url.searchParams.get("token_hash");
@@ -15,18 +16,18 @@ export const GET: APIRoute = async ({ request, cookies, redirect }) => {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      return redirect("/confirm?error=" + encodeURIComponent(error.message));
+      return redirectTo("/confirm?error=" + encodeURIComponent(error.message), request);
     }
-    return redirect("/confirm");
+    return redirectTo("/confirm", request);
   }
 
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash });
     if (error) {
-      return redirect("/confirm?error=" + encodeURIComponent(error.message));
+      return redirectTo("/confirm?error=" + encodeURIComponent(error.message), request);
     }
-    return redirect("/confirm");
+    return redirectTo("/confirm", request);
   }
 
-  return redirect("/confirm?error=" + encodeURIComponent("Missing confirmation code"));
+  return redirectTo("/confirm?error=" + encodeURIComponent("Missing confirmation code"), request);
 };

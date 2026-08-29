@@ -1,9 +1,20 @@
 import { createServerClient, parseCookieHeader } from "@supabase/ssr";
-import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "astro:env/server";
+import { getSecret } from "astro:env/server";
 import type { AstroCookies } from "astro";
 
+function requireEnv(name: string): string {
+  const value = getSecret(name);
+  if (!value) {
+    throw new Error(`Missing environment variable: ${name}`);
+  }
+  return value;
+}
+
 export function createSupabaseServerClient(request: Request, cookies: AstroCookies) {
-  return createServerClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  const url = requireEnv("SUPABASE_URL");
+  const key = requireEnv("SUPABASE_PUBLISHABLE_KEY");
+
+  return createServerClient(url, key, {
     cookies: {
       getAll() {
         return parseCookieHeader(request.headers.get("Cookie") ?? "").map(

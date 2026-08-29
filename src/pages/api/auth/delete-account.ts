@@ -5,19 +5,18 @@ import { apiError, apiRedirectOrJson, apiUnauthorized } from "../../../lib/api-r
 import { createSupabaseAdminClient } from "../../../lib/supabase-admin";
 import { createSupabaseServerClient } from "../../../lib/supabase";
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   const supabase = createSupabaseServerClient(request, cookies);
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return apiUnauthorized(request, redirect);
+  if (!user) return apiUnauthorized(request);
 
   const admin = createSupabaseAdminClient();
   if (!admin) {
     return apiError(
       request,
-      redirect,
       "/dashboard",
       "Account deletion is not configured on the server"
     );
@@ -26,10 +25,10 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const { error } = await admin.auth.admin.deleteUser(user.id);
 
   if (error) {
-    return apiError(request, redirect, "/dashboard", error.message);
+    return apiError(request, "/dashboard", error.message);
   }
 
   await supabase.auth.signOut();
 
-  return apiRedirectOrJson(request, redirect, "/", {});
+  return apiRedirectOrJson(request, "/", {});
 };

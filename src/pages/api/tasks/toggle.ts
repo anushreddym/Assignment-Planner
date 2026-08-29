@@ -7,19 +7,19 @@ import { toTaskView, todayKeys, type TaskRow } from "../../../lib/view-models";
 
 const TASK_SELECT = "id, title, description, due_date, completed, subject_id, subjects(id, name, color)";
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   const supabase = createSupabaseServerClient(request, cookies);
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return apiUnauthorized(request, redirect);
+  if (!user) return apiUnauthorized(request);
 
   const formData = await request.formData();
   const id = formData.get("id")?.toString();
 
   if (!id) {
-    return apiError(request, redirect, "/dashboard", "Missing task id");
+    return apiError(request, "/dashboard", "Missing task id");
   }
 
   const { data: task, error: fetchError } = await supabase
@@ -32,7 +32,6 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   if (fetchError || !task) {
     return apiError(
       request,
-      redirect,
       "/dashboard",
       fetchError?.message ?? "Task not found"
     );
@@ -45,7 +44,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     .eq("user_id", user.id);
 
   if (error) {
-    return apiError(request, redirect, "/dashboard", error.message);
+    return apiError(request, "/dashboard", error.message);
   }
 
   const { data: updated, error: loadError } = await supabase
@@ -58,7 +57,6 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   if (loadError || !updated) {
     return apiError(
       request,
-      redirect,
       "/dashboard",
       loadError?.message ?? "Task not found"
     );
@@ -67,5 +65,5 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const keys = todayKeys();
   const viewTask = toTaskView(updated as unknown as TaskRow, keys.todayKey, keys.weekEndKey);
 
-  return apiRedirectOrJson(request, redirect, "/dashboard", { task: viewTask });
+  return apiRedirectOrJson(request, "/dashboard", { task: viewTask });
 };
