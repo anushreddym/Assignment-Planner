@@ -2,6 +2,21 @@ export function wantsJson(request: Request): boolean {
   return request.headers.get("Accept")?.includes("application/json") ?? false;
 }
 
+export function errorMessage(error: unknown, fallback = "Something went wrong"): string {
+  if (typeof error === "string" && error.trim()) return error;
+  if (error instanceof Error && error.message) return error.message;
+
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    for (const key of ["message", "error_description", "msg", "error"]) {
+      const value = record[key];
+      if (typeof value === "string" && value.trim()) return value;
+    }
+  }
+
+  return fallback;
+}
+
 /**
  * Response.redirect() produces immutable headers, which breaks when Astro
  * appends Supabase auth cookies. Build the response manually instead.

@@ -1,7 +1,7 @@
 export const prerender = false;
 
 import type { APIRoute } from "astro";
-import { redirectTo } from "../../../lib/api-response";
+import { errorMessage, redirectTo } from "../../../lib/api-response";
 import { createSupabaseServerClient } from "../../../lib/supabase";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -33,7 +33,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
 
     if (error) {
-      return redirectTo("/signup?error=" + encodeURIComponent(error.message), request);
+      console.error("signUp failed", error);
+      return redirectTo(
+        "/signup?error=" + encodeURIComponent(errorMessage(error, "Could not create account")),
+        request
+      );
     }
 
     if (!data.session) {
@@ -42,7 +46,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     return redirectTo("/dashboard", request);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Signup failed";
-    return redirectTo("/signup?error=" + encodeURIComponent(message), request);
+    console.error("signup route crashed", error);
+    return redirectTo(
+      "/signup?error=" + encodeURIComponent(errorMessage(error, "Signup failed")),
+      request
+    );
   }
 };
