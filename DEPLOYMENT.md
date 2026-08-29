@@ -111,6 +111,24 @@ Save. Auth emails and OAuth redirects will use production URL.
 
 **Authentication → Rate Limits → Email sent** → raise as needed (e.g. 100/hour).
 
+### Confirm signup email template
+
+Source file: `supabase/email-templates/confirm-signup.html`
+
+**Preview shows your edit but the sent email is still the old default?** Supabase silently falls back to the default template when the saved HTML has a Go-template syntax error. Preview does not catch this.
+
+**Push the template (recommended):**
+
+```bash
+SUPABASE_ACCESS_TOKEN=sbp_... npm run sync:email-template
+```
+
+Token: https://supabase.com/dashboard/account/tokens
+
+**Or paste manually:** Authentication → Emails → Confirm signup → Source → paste → **Save** (not just Preview).
+
+If it still fails, check **Logs → Auth** for `templatemailer_template_body_parse_error`. Test with a **new signup** (old emails in your inbox will not change).
+
 ---
 
 ## 6. Local development
