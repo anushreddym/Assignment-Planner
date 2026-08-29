@@ -7,6 +7,13 @@ import DashboardPreview from "../components/DashboardPreview.astro";
 import { getAuthUser } from "../lib/auth";
 
 const { user } = await getAuthUser(Astro.request, Astro.cookies);
+
+const authCode = Astro.url.searchParams.get("code");
+const tokenHash = Astro.url.searchParams.get("token_hash");
+if (authCode || tokenHash) {
+  return Astro.redirect(`/confirm${Astro.url.search}`);
+}
+
 if (user) return Astro.redirect("/dashboard");
 ---
 
@@ -85,3 +92,13 @@ if (user) return Astro.redirect("/dashboard");
     </main>
   </div>
 </Layout>
+
+<script is:inline>
+  if (
+    window.location.hash &&
+    (window.location.hash.includes("access_token") ||
+      window.location.hash.includes("error"))
+  ) {
+    window.location.replace("/confirm" + window.location.hash);
+  }
+</script>

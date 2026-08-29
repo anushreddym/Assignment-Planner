@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       password,
       options: {
         data: { full_name: name },
-        emailRedirectTo: `${origin}/api/auth/callback`,
+        emailRedirectTo: `${origin}/confirm`,
       },
     });
 

@@ -1,15 +1,47 @@
 ---
 export const prerender = false;
 
+import type { EmailOtpType } from "@supabase/supabase-js";
 import Layout from "../layouts/Layout.astro";
 import Navbar from "../components/Navbar.astro";
 import { getAuthUser } from "../lib/auth";
+import { createSupabaseServerClient } from "../lib/supabase";
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "astro:env/server";
+
+const code = Astro.url.searchParams.get("code");
+const tokenHash = Astro.url.searchParams.get("token_hash");
+const type = Astro.url.searchParams.get("type") as EmailOtpType | null;
+
+if (code) {
+  const supabase = createSupabaseServerClient(Astro.request, Astro.cookies);
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    return Astro.redirect("/confirm?error=" + encodeURIComponent(error.message));
+  }
+  return Astro.redirect("/confirm");
+}
+
+if (tokenHash && type) {
+  const supabase = createSupabaseServerClient(Astro.request, Astro.cookies);
+  const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+  if (error) {
+    return Astro.redirect("/confirm?error=" + encodeURIComponent(error.message));
+  }
+  return Astro.redirect("/confirm");
+}
 
 const error = Astro.url.searchParams.get("error");
 const { user } = await getAuthUser(Astro.request, Astro.cookies);
 ---
 
 <Layout title="Email confirmed">
+  <div
+    id="confirm-auth"
+    data-supabase-url={SUPABASE_URL}
+    data-supabase-key={SUPABASE_PUBLISHABLE_KEY}
+    hidden
+  ></div>
+
   <div class="app-shell">
     <Navbar>
       {
@@ -54,3 +86,8 @@ const { user } = await getAuthUser(Astro.request, Astro.cookies);
     </div>
   </div>
 </Layout>
+
+<script>
+  import { handleConfirmAuthHash } from "../scripts/confirm-auth.client";
+  handleConfirmAuthHash();
+</script>
