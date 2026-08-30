@@ -50,7 +50,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return apiError(
       request,
       "/dashboard",
-      fetchError?.message ?? "Task not found"
+      fetchError?.message ?? "Assignment not found"
     );
   }
 

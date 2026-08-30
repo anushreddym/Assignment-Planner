@@ -38,7 +38,7 @@ const { displayName, email, initials } = Astro.props;
       </label>
 
       <div class="delete-confirm profile-menu-delete-confirm">
-        <p>Delete your account? All tasks and subjects will be removed. This can't be undone.</p>
+        <p>Delete your account? All assignments and subjects will be removed. This can't be undone.</p>
         <div class="delete-confirm-actions">
           <label for="profile-delete-toggle" class="btn btn-ghost btn-sm">Cancel</label>
           <form action="/api/auth/delete-account" method="post" class="js-profile-delete-form">

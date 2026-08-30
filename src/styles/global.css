@@ -508,12 +508,24 @@ textarea.input {
   font-size: 14.5px;
 }
 
+.subject-filters {
+  margin-bottom: 28px;
+}
+
+.subject-filters-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+  margin: 0 0 8px;
+}
+
 .subject-tabs {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 28px;
 }
 
 .subject-tabs-scroll {
@@ -627,18 +639,18 @@ textarea.input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
+  height: 34px;
+  padding: 0 14px;
   margin: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-sm);
   border: 1px dashed var(--color-border);
   color: var(--color-muted);
   cursor: pointer;
-  font-size: 18px;
-  font-weight: 400;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 1;
   list-style: none;
+  white-space: nowrap;
   transition:
     border-color 0.2s ease,
     color 0.2s ease,
@@ -783,6 +795,66 @@ textarea.input {
   width: 100%;
 }
 
+.task-select-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.task-card-wrapper.is-selected .task-card {
+  border-color: var(--color-ink);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 35%, transparent);
+}
+
+.mark-done-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  gap: 7px;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+}
+
+.mark-done-btn svg {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.mark-done-btn:hover {
+  background: var(--color-surface-raised);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.mark-done-btn.is-complete {
+  background: var(--color-surface-raised);
+  border-color: var(--color-border);
+  color: var(--color-muted);
+}
+
+.mark-done-btn.is-complete:hover {
+  background: var(--color-surface-raised);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+@media (min-width: 641px) {
+  .mark-done-btn {
+    height: calc(12px + 2px + 1.5 * 10.5px + 1.5 * 13.5px);
+    padding: 0 12px;
+    box-sizing: border-box;
+  }
+}
+
 .edit-toggle:checked ~ .edit-task-panel {
   display: block;
 }
@@ -797,12 +869,19 @@ textarea.input {
 
 .task-actions {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: none;
+  flex-direction: row;
   align-items: stretch;
   gap: 8px;
   flex-shrink: 0;
-  min-width: 104px;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.task-card-wrapper.is-selected .task-actions {
+  display: flex;
 }
 
 .task-actions .edit-btn,
@@ -812,9 +891,9 @@ textarea.input {
   justify-content: center;
   gap: 7px;
   box-sizing: border-box;
-  width: 100%;
-  min-width: 104px;
-  height: 34px;
+  flex: 1;
+  min-width: 0;
+  height: 38px;
   padding: 0 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
@@ -845,16 +924,36 @@ textarea.input {
   border-color: var(--color-ink);
 }
 
+.task-actions .task-delete-btn {
+  background: color-mix(in srgb, var(--color-warm) 16%, var(--color-surface-raised));
+  border-color: color-mix(in srgb, var(--color-warm) 65%, var(--color-border));
+  color: var(--color-warm-text);
+}
+
 .task-actions .task-delete-btn:hover {
-  background: color-mix(in srgb, var(--color-warm) 18%, var(--color-surface-raised));
-  color: var(--color-warm);
+  background: var(--color-warm);
+  color: var(--color-bg);
   border-color: var(--color-warm);
+}
+
+.task-actions .delete-backdrop {
+  display: none;
 }
 
 .task-actions .delete-confirm {
   top: calc(100% + 8px);
   right: 0;
-  width: 220px;
+  left: auto;
+  width: min(260px, calc(100vw - 40px));
+  z-index: 60;
+}
+
+.delete-toggle:checked ~ .delete-confirm {
+  display: block;
+}
+
+.delete-toggle:checked ~ .delete-backdrop {
+  display: none;
 }
 
 .task-check-form {
@@ -1004,13 +1103,22 @@ textarea.input {
   white-space: nowrap;
 }
 
-.due-pill.urgent {
-  border-color: var(--color-warm);
+.due-pill.past-due {
+  border-color: color-mix(in srgb, var(--color-warm) 55%, var(--color-border));
 }
 
-.due-pill.urgent .day,
-.due-pill.urgent .date {
+.due-pill.past-due .day,
+.due-pill.past-due .date {
   color: var(--color-warm);
+}
+
+.due-pill.due-soon {
+  border-color: color-mix(in srgb, var(--subject-yellow) 55%, var(--color-border));
+}
+
+.due-pill.due-soon .day,
+.due-pill.due-soon .date {
+  color: var(--subject-yellow);
 }
 
 .empty-state {
@@ -1079,6 +1187,17 @@ textarea.input {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.btn-danger {
+  background: var(--color-warm);
+  color: var(--color-bg);
+  border: 1px solid var(--color-warm);
+}
+
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--color-warm) 85%, white);
+  border-color: color-mix(in srgb, var(--color-warm) 85%, white);
 }
 
 .error-text {
@@ -1776,19 +1895,41 @@ textarea.input {
     right: 20px;
     width: auto;
     transform: translateY(-50%);
-    z-index: 50;
+    z-index: 52;
     max-height: calc(100vh - 40px);
     overflow-y: auto;
   }
 
-  .task-actions .delete-confirm,
-  .page-head-actions .delete-confirm {
-    width: min(220px, calc(100vw - 40px));
+  .task-actions .delete-toggle:checked ~ .delete-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 51;
+    cursor: pointer;
   }
 
-  .task-actions .delete-confirm {
-    right: 0;
-    left: auto;
+  .task-actions .delete-toggle:checked ~ .delete-confirm {
+    display: block;
+    position: fixed;
+    top: 50%;
+    left: 20px;
+    right: 20px;
+    width: auto;
+    transform: translateY(-50%);
+    z-index: 52;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+
+  .page-head-actions .delete-toggle:checked ~ .delete-confirm {
+    position: fixed;
+    top: 50%;
+    left: 20px;
+    right: 20px;
+    width: auto;
+    transform: translateY(-50%);
+    z-index: 52;
   }
 
   .landing-main {
@@ -1838,16 +1979,38 @@ textarea.input {
 
   .task-card-main {
     flex-wrap: wrap;
+    align-items: flex-start;
   }
 
-  .task-actions {
-    flex-direction: row;
-    width: 100%;
+  .task-select-area {
+    flex: 1 1 calc(100% - 56px);
     min-width: 0;
   }
 
   .task-actions .edit-btn,
   .task-actions .task-delete-btn {
-    flex: 1;
+    width: 100%;
+    justify-content: center;
+    height: auto;
+    padding: 8px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .mark-done-btn {
+    width: 100%;
+    height: auto;
+    justify-content: center;
+    padding: 10px 16px;
+    margin-top: 10px;
+  }
+
+  .task-actions {
+    flex-direction: column;
+  }
+
+  .edit-task-panel {
+    max-height: 70vh;
+    overflow-y: auto;
   }
 }

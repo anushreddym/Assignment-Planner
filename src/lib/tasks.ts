@@ -52,7 +52,9 @@ export function endOfWeek(from: Date): Date {
   return d;
 }
 
-export type TaskBucket = "today" | "week" | "later" | "completed";
+export type TaskBucket = "past_due" | "today" | "week" | "later" | "completed";
+
+export type DueStatus = "past-due" | "due-soon" | "normal";
 
 export function bucketTask(
   dueDate: string,
@@ -61,22 +63,34 @@ export function bucketTask(
   weekEndKey: string
 ): TaskBucket {
   if (completed) return "completed";
-  if (dueDate <= todayKey) return "today"; // today + overdue
+  if (dueDate < todayKey) return "past_due";
+  if (dueDate === todayKey) return "today";
   if (dueDate <= weekEndKey) return "week";
   return "later";
+}
+
+export function getDueStatus(
+  dueDate: string,
+  completed: boolean,
+  todayKey: string
+): DueStatus {
+  if (completed) return "normal";
+  if (dueDate < todayKey) return "past-due";
+  const urgentThrough = addDaysToKey(todayKey, 3);
+  if (dueDate <= urgentThrough) return "due-soon";
+  return "normal";
+}
+
+/** @deprecated Use getDueStatus instead */
+export function isUrgent(dueDate: string, completed: boolean, todayKey: string): boolean {
+  const status = getDueStatus(dueDate, completed, todayKey);
+  return status === "past-due" || status === "due-soon";
 }
 
 export function addDaysToKey(key: string, days: number): string {
   const d = parseDateKey(key);
   d.setDate(d.getDate() + days);
   return toDateKey(d);
-}
-
-/** Red styling when due within the next 3 days (inclusive), or overdue. */
-export function isUrgent(dueDate: string, completed: boolean, todayKey: string): boolean {
-  if (completed) return false;
-  const urgentThrough = addDaysToKey(todayKey, 3);
-  return dueDate <= urgentThrough;
 }
 
 export function formatTodayLabel(d: Date): string {

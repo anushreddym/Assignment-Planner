@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const id = formData.get("id")?.toString();
 
   if (!id) {
-    return apiError(request, "/dashboard", "Missing task id");
+    return apiError(request, "/dashboard", "Missing assignment id");
   }
 
   const { data: task, error: fetchError } = await supabase
@@ -33,7 +33,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return apiError(
       request,
       "/dashboard",
-      fetchError?.message ?? "Task not found"
+      fetchError?.message ?? "Assignment not found"
     );
   }
 
@@ -58,7 +58,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return apiError(
       request,
       "/dashboard",
-      loadError?.message ?? "Task not found"
+      loadError?.message ?? "Assignment not found"
     );
   }
 

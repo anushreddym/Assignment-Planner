@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const id = formData.get("id")?.toString();
 
   if (!id) {
-    return apiError(request, "/dashboard", "Missing task id");
+    return apiError(request, "/dashboard", "Missing assignment id");
   }
 
   const { error } = await supabase.from("tasks").delete().eq("id", id).eq("user_id", user.id);

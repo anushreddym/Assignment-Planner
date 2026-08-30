@@ -18,11 +18,14 @@ declare global {
 }
 
 const BUCKET_TITLES: Record<TaskBucket, string> = {
+  past_due: "Past due",
   today: "Today",
   week: "This week",
   later: "Later",
   completed: "Completed",
 };
+
+const BUCKET_ORDER: TaskBucket[] = ["past_due", "today", "week", "later", "completed"];
 
 const main = document.querySelector<HTMLElement>("#dashboard");
 if (!main) throw new Error("Dashboard root not found");
@@ -48,8 +51,8 @@ function updateSubText() {
 
   sub.textContent =
     openCount === 0
-      ? `No open tasks across ${subjectCount} subjects.`
-      : `You have ${openCount} open task${openCount === 1 ? "" : "s"} across ${subjectCount} subject${subjectCount === 1 ? "" : "s"}.`;
+      ? `No open assignments across ${subjectCount} subjects.`
+      : `You have ${openCount} open assignment${openCount === 1 ? "" : "s"} across ${subjectCount} subject${subjectCount === 1 ? "" : "s"}.`;
 }
 
 function getActiveSubjectFilter() {
@@ -83,6 +86,23 @@ function setActiveSubjectTab(subject: string) {
 function closeDeleteToggle(id: string) {
   const input = main.querySelector<HTMLInputElement>(`#${CSS.escape(id)}`);
   if (input) input.checked = false;
+}
+
+function clearTaskSelection() {
+  main.querySelectorAll<HTMLElement>(".task-card-wrapper.is-selected").forEach((wrapper) => {
+    wrapper.classList.remove("is-selected");
+    wrapper.querySelector<HTMLButtonElement>("[data-task-select]")?.setAttribute("aria-pressed", "false");
+  });
+}
+
+function selectTaskCard(wrapper: HTMLElement) {
+  clearTaskSelection();
+  wrapper.classList.add("is-selected");
+  wrapper.querySelector<HTMLButtonElement>("[data-task-select]")?.setAttribute("aria-pressed", "true");
+}
+
+function duePillClass(dueStatus: TaskView["dueStatus"]) {
+  return dueStatus !== "normal" ? dueStatus : "";
 }
 
 async function apiPost(form: HTMLFormElement): Promise<ApiResult> {
@@ -120,45 +140,53 @@ function renderTaskCard(task: TaskView) {
             />
           </label>
         </form>
-        <div class="task-body">
-          <div class="task-top-row">
-            <span class="subject-label">${esc(task.subjectName)}</span>
-          </div>
-          <p class="task-title">${esc(task.title)}</p>
-          ${task.description ? `<p class="task-desc">${esc(task.description)}</p>` : ""}
-        </div>
-        <div class="due-pill ${task.urgent ? "urgent" : ""}">
-          <span class="day">${esc(task.day)}</span>
-          <span class="date">${esc(task.date)}</span>
-        </div>
-        <div class="task-actions">
-          <label for="edit-task-${esc(task.id)}" class="edit-btn" aria-label="Edit &quot;${esc(task.title)}&quot;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
-            Edit
-          </label>
-          <input type="checkbox" id="menu-task-${esc(task.id)}" class="delete-toggle" hidden />
-          <label for="menu-task-${esc(task.id)}" class="task-delete-btn" aria-label="Delete &quot;${esc(task.title)}&quot;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3 6h18" />
-              <path d="M8 6V4h8v2" />
-              <path d="M19 6l-1 14H6L5 6" />
-              <path d="M10 11v6" />
-              <path d="M14 11v6" />
-            </svg>
-            Delete
-          </label>
-          <div class="delete-confirm">
-            <p>Delete this task?</p>
-            <div class="delete-confirm-actions">
-              <label for="menu-task-${esc(task.id)}" class="btn btn-ghost btn-sm">Cancel</label>
-              <form action="/api/tasks/delete" method="post" class="js-dashboard-form">
-                <input type="hidden" name="id" value="${esc(task.id)}" />
-                <button type="submit" class="btn btn-primary btn-sm">Delete</button>
-              </form>
+        <button type="button" class="task-select-area" data-task-select aria-pressed="false">
+          <div class="task-body">
+            <div class="task-top-row">
+              <span class="subject-label">${esc(task.subjectName)}</span>
             </div>
+            <p class="task-title">${esc(task.title)}</p>
+            ${task.description ? `<p class="task-desc">${esc(task.description)}</p>` : ""}
+          </div>
+          <div class="due-pill ${duePillClass(task.dueStatus)}">
+            <span class="day">${esc(task.day)}</span>
+            <span class="date">${esc(task.date)}</span>
+          </div>
+        </button>
+        <button type="button" class="btn btn-sm mark-done-btn js-mark-done${task.completed ? " is-complete" : ""}" data-task-id="${esc(task.id)}">
+          ${task.completed
+            ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Mark incomplete`
+            : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Mark as done`}
+        </button>
+      </div>
+      <div class="task-actions">
+        <label for="edit-task-${esc(task.id)}" class="edit-btn" aria-label="Edit &quot;${esc(task.title)}&quot;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+          </svg>
+          Edit
+        </label>
+        <input type="checkbox" id="menu-task-${esc(task.id)}" class="delete-toggle" hidden />
+        <label for="menu-task-${esc(task.id)}" class="delete-backdrop" aria-hidden="true"></label>
+        <label for="menu-task-${esc(task.id)}" class="task-delete-btn" aria-label="Delete &quot;${esc(task.title)}&quot;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 6h18" />
+            <path d="M8 6V4h8v2" />
+            <path d="M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+          </svg>
+          Delete assignment
+        </label>
+        <div class="delete-confirm">
+          <p>Delete this assignment?</p>
+          <div class="delete-confirm-actions">
+            <label for="menu-task-${esc(task.id)}" class="btn btn-ghost btn-sm">Cancel</label>
+            <form action="/api/tasks/delete" method="post" class="js-dashboard-form">
+              <input type="hidden" name="id" value="${esc(task.id)}" />
+              <button type="submit" class="btn btn-danger btn-sm">Delete assignment</button>
+            </form>
           </div>
         </div>
       </div>
@@ -206,7 +234,13 @@ function getOrCreateTaskGroup(bucket: TaskBucket) {
     `;
 
     const emptyState = main.querySelector(".empty-state");
-    if (emptyState) {
+    const insertBefore = BUCKET_ORDER.slice(BUCKET_ORDER.indexOf(group.dataset.bucket as TaskBucket) + 1)
+      .map((key) => main.querySelector(`.task-group[data-bucket="${key}"]`))
+      .find(Boolean);
+
+    if (insertBefore) {
+      main.insertBefore(group, insertBefore);
+    } else if (emptyState) {
       main.insertBefore(group, emptyState);
     } else {
       main.appendChild(group);
@@ -225,9 +259,11 @@ function insertTaskCard(task: TaskView) {
 
 function replaceTaskCard(task: TaskView) {
   const existing = main.querySelector<HTMLElement>(`.task-card-wrapper input[name="id"][value="${CSS.escape(task.id)}"]`)?.closest(".task-card-wrapper");
+  const wasSelected = existing?.classList.contains("is-selected") ?? false;
   existing?.remove();
 
   const card = insertTaskCard(task);
+  if (wasSelected) selectTaskCard(card);
   applySubjectFilter();
   return card;
 }
@@ -284,7 +320,7 @@ function ensureEmptyState() {
 
   const empty = document.createElement("div");
   empty.className = "empty-state";
-  empty.textContent = "No tasks yet. Add one above to get started.";
+  empty.textContent = "No assignments yet. Add one above to get started.";
   main.appendChild(empty);
 }
 
@@ -309,7 +345,7 @@ function renderSubjectTab(subject: SubjectView) {
       <input type="checkbox" id="menu-subject-${esc(subject.id)}" class="delete-toggle" hidden />
       <label for="menu-subject-${esc(subject.id)}" class="delete-btn" aria-label="Delete ${esc(subject.name)} subject">✕</label>
       <div class="delete-confirm">
-        <p>Delete ${esc(subject.name)}? Its tasks won't be deleted.</p>
+        <p>Delete ${esc(subject.name)}? Its assignments won't be deleted.</p>
         <div class="delete-confirm-actions">
           <label for="menu-subject-${esc(subject.id)}" class="btn btn-ghost btn-sm">Cancel</label>
           <form action="/api/subjects/delete" method="post" class="js-dashboard-form">
@@ -339,6 +375,40 @@ function addSubjectOption(subject: SubjectView) {
 function removeSubjectOption(id: string) {
   main.querySelector<HTMLSelectElement>(`#subject option[value="${CSS.escape(id)}"]`)?.remove();
 }
+
+main.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+
+  const markDone = target.closest<HTMLButtonElement>(".js-mark-done");
+  if (markDone) {
+    const wrapper = markDone.closest(".task-card-wrapper");
+    const form = wrapper?.querySelector<HTMLFormElement>(".task-check-form.js-dashboard-form");
+    const checkbox = form?.querySelector<HTMLInputElement>(".task-check");
+    if (form && checkbox) {
+      checkbox.checked = !checkbox.checked;
+      form.requestSubmit();
+    }
+    return;
+  }
+
+  const selectArea = target.closest<HTMLButtonElement>("[data-task-select]");
+  if (selectArea) {
+    const wrapper = selectArea.closest<HTMLElement>(".task-card-wrapper");
+    if (!wrapper) return;
+
+    if (wrapper.classList.contains("is-selected")) {
+      clearTaskSelection();
+    } else {
+      selectTaskCard(wrapper);
+    }
+    return;
+  }
+
+  if (!target.closest(".task-card-wrapper")) {
+    clearTaskSelection();
+  }
+});
 
 main.querySelector("#subject-tabs")?.addEventListener("click", (event) => {
   const tab = (event.target as Element).closest<HTMLButtonElement>(".subject-tab");
@@ -438,7 +508,7 @@ main.addEventListener("submit", async (event) => {
       const addTask = form.closest<HTMLDetailsElement>(".add-task");
       if (addTask) addTask.open = false;
 
-      toast("Task added", "success");
+      toast("Assignment added", "success");
       return;
     }
 
@@ -446,14 +516,14 @@ main.addEventListener("submit", async (event) => {
       replaceTaskCard(data.task);
       syncOpenCount();
       closeDeleteToggle(`edit-task-${data.task.id}`);
-      toast("Task updated", "success");
+      toast("Assignment updated", "success");
       return;
     }
 
     if (action.includes("/api/tasks/toggle") && data.task) {
       replaceTaskCard(data.task);
       syncOpenCount();
-      toast(data.task.completed ? "Task completed" : "Task reopened", "success");
+      toast(data.task.completed ? "Assignment completed" : "Assignment reopened", "success");
       return;
     }
 
@@ -465,6 +535,8 @@ main.addEventListener("submit", async (event) => {
       card?.remove();
       if (wasOpen) openCount = Math.max(0, openCount - 1);
 
+      clearTaskSelection();
+
       removeEmptyGroups();
       if (!main.querySelector(".task-card-wrapper")) {
         ensureEmptyState();
@@ -475,7 +547,7 @@ main.addEventListener("submit", async (event) => {
       updateSubText();
       applySubjectFilter();
       closeDeleteToggle(`menu-task-${data.id}`);
-      toast("Task deleted", "success");
+      toast("Assignment deleted", "success");
       return;
     }
 
@@ -486,7 +558,7 @@ main.addEventListener("submit", async (event) => {
       openCount = 0;
       updateSubText();
       closeDeleteToggle("clear-all-menu");
-      toast("All tasks cleared", "success");
+      toast("All assignments cleared", "success");
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Something went wrong";

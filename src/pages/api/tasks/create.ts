@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     .single();
 
   if (error || !inserted) {
-    return apiError(request, "/dashboard", error?.message ?? "Failed to create task");
+    return apiError(request, "/dashboard", error?.message ?? "Failed to create assignment");
   }
 
   const keys = todayKeys();

@@ -1,4 +1,12 @@
-import { bucketTask, endOfWeek, formatDuePill, isUrgent, toDateKey, type TaskBucket } from "./tasks";
+import {
+  bucketTask,
+  endOfWeek,
+  formatDuePill,
+  getDueStatus,
+  toDateKey,
+  type DueStatus,
+  type TaskBucket,
+} from "./tasks";
 
 export type TaskView = {
   id: string;
@@ -10,7 +18,7 @@ export type TaskView = {
   color: string;
   day: string;
   date: string;
-  urgent: boolean;
+  dueStatus: DueStatus;
   completed: boolean;
   bucket: TaskBucket;
 };
@@ -40,7 +48,7 @@ export function toTaskView(task: TaskRow, todayKey: string, weekEndKey: string):
     color,
     day,
     date,
-    urgent: isUrgent(task.due_date, task.completed, todayKey),
+    dueStatus: getDueStatus(task.due_date, task.completed, todayKey),
     completed: task.completed,
     bucket: bucketTask(task.due_date, task.completed, todayKey, weekEndKey),
   };
