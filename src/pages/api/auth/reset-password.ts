@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import { errorMessage, redirectTo } from "../../../lib/api-response";
+import { clearAuthIntent } from "../../../lib/auth-intent";
 import { createSupabaseServerClient } from "../../../lib/supabase";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -49,6 +50,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     await supabase.auth.signOut();
+    clearAuthIntent(cookies);
 
     return redirectTo(
       "/signin?success=" + encodeURIComponent("Password updated. Sign in with your new password."),

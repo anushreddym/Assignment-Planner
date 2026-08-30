@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import { errorMessage, redirectTo } from "../../../lib/api-response";
+import { setAuthIntent } from "../../../lib/auth-intent";
 import { createSupabaseServerClient } from "../../../lib/supabase";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -18,6 +19,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const supabase = createSupabaseServerClient(request, cookies);
     const origin = new URL(request.url).origin;
+
+    setAuthIntent(cookies, "recovery", request);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/reset-password?type=recovery`,

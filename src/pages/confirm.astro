@@ -5,18 +5,22 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import Layout from "../layouts/Layout.astro";
 import Navbar from "../components/Navbar.astro";
 import { getAuthUser } from "../lib/auth";
+import { readAuthIntent } from "../lib/auth-intent";
+import { authHandlerPath } from "../lib/auth-routes";
 import { createSupabaseServerClient } from "../lib/supabase";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "astro:env/server";
 
 const code = Astro.url.searchParams.get("code");
 const tokenHash = Astro.url.searchParams.get("token_hash");
 const type = Astro.url.searchParams.get("type") as EmailOtpType | null;
+const intent = readAuthIntent(Astro.cookies);
+const handlerPath = authHandlerPath(Astro.url.searchParams, intent);
 
-if (code && type === "recovery") {
+if (code && handlerPath === "/reset-password") {
   return Astro.redirect(`/reset-password${Astro.url.search}`);
 }
 
-if (tokenHash && type === "recovery") {
+if (tokenHash && handlerPath === "/reset-password") {
   return Astro.redirect(`/reset-password${Astro.url.search}`);
 }
 
@@ -25,6 +29,9 @@ if (code) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return Astro.redirect("/confirm?error=" + encodeURIComponent(error.message));
+  }
+  if (intent === "recovery") {
+    return Astro.redirect("/reset-password");
   }
   return Astro.redirect("/confirm");
 }
@@ -35,11 +42,18 @@ if (tokenHash && type) {
   if (error) {
     return Astro.redirect("/confirm?error=" + encodeURIComponent(error.message));
   }
+  if (intent === "recovery" || type === "recovery") {
+    return Astro.redirect("/reset-password");
+  }
   return Astro.redirect("/confirm");
 }
 
 const error = Astro.url.searchParams.get("error");
 const { user } = await getAuthUser(Astro.request, Astro.cookies);
+
+if (user && intent === "recovery" && !error) {
+  return Astro.redirect("/reset-password");
+}
 ---
 
 <Layout title="Email confirmed">

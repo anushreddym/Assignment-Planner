@@ -12,6 +12,12 @@ export async function handleConfirmAuthHash() {
   const hash = window.location.hash;
   if (!hash || !hash.includes("access_token")) return;
 
+  const params = new URLSearchParams(hash.slice(1));
+  if (params.get("type") === "recovery") {
+    window.location.replace("/reset-password" + hash);
+    return;
+  }
+
   const config = getConfig();
   if (!config) return;
 
@@ -21,9 +27,7 @@ export async function handleConfirmAuthHash() {
   window.history.replaceState({}, "", window.location.pathname + window.location.search);
 
   if (error) {
-    window.location.replace(
-      `/confirm?error=${encodeURIComponent(error.message)}`
-    );
+    window.location.replace(`/confirm?error=${encodeURIComponent(error.message)}`);
     return;
   }
 
