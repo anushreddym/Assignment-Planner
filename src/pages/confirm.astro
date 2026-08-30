@@ -12,6 +12,14 @@ const code = Astro.url.searchParams.get("code");
 const tokenHash = Astro.url.searchParams.get("token_hash");
 const type = Astro.url.searchParams.get("type") as EmailOtpType | null;
 
+if (code && type === "recovery") {
+  return Astro.redirect(`/reset-password${Astro.url.search}`);
+}
+
+if (tokenHash && type === "recovery") {
+  return Astro.redirect(`/reset-password${Astro.url.search}`);
+}
+
 if (code) {
   const supabase = createSupabaseServerClient(Astro.request, Astro.cookies);
   const { error } = await supabase.auth.exchangeCodeForSession(code);

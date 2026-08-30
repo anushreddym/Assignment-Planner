@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const origin = new URL(request.url).origin;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/reset-password`,
+      redirectTo: `${origin}/reset-password?type=recovery`,
     });
 
     if (error) {
