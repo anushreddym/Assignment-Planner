@@ -12,5 +12,7 @@ export default defineConfig({
       PUBLIC_SOURCE_URL: envField.string({ context: 'client', access: 'public', optional: true }),
     },
   },
-  adapter: vercel(),
+  adapter: vercel({
+    webAnalytics: { enabled: true }
+  }),
 });
